@@ -1,9 +1,11 @@
 ﻿# coding=utf-8
 # 
 import logging
-logger = logging.getLogger(__name__)
+from repo_data.constants import Constants
+from repo_data.controllers import AppController
 
-
+#controller supposed to be stateless so it is safe to have a singleton , one for all users 
+controller = AppController()
 
 def initializeDatastore(mode):
 	"""
@@ -12,9 +14,8 @@ def initializeDatastore(mode):
 	side effect: initialize the underlying data store in test or production
 	mode.
 	"""
-	pass
-
-
+	return controller.initializeDatastore(mode)
+	
 
 def clearRepoData():
 	"""
@@ -24,8 +25,7 @@ def clearRepoData():
 	Throws NoDataClearingInProuctionMode if the underlying datastore is
 	in production mode.
 	"""
-	pass
-
+	return controller.clearRepoData()
 
 
 def getRepo( date, status='open', portfolio='all', custodian='all', repoName='all'
@@ -34,7 +34,7 @@ def getRepo( date, status='open', portfolio='all', custodian='all', repoName='al
 	[String] date (yyyy-mm-dd)
 		=> [Iterable] repo transactions
 	"""
-	return []
+	return controller.getRepo(date, status, portfolio, custodian, repoName, broker, hasHairCut)
 
 
 
@@ -46,7 +46,7 @@ def addRepoMaster(master):
 
 	Throws: RepoMasterAlreadyExist
 	"""
-	pass
+	return controller.addRepoMaster(master)
 
 
 
@@ -59,7 +59,7 @@ def addRepoTransaction(transaction):
 	Throws: RepoTransactionAlreadyExist
 			RepoMasterNotExist
 	"""
-	pass
+	return controller.addRepoTransaction(transaction)
 
 
 
@@ -72,7 +72,7 @@ def closeRepoTransaction(transaction):
 	Throws: RepoTransactionNotExist
 			CloseCanceledRepoTransaction
 	"""
-	pass
+	return controller.closeRepoTransaction(transaction)
 
 
 
@@ -84,4 +84,17 @@ def cancelRepoTransaction(transaction):
 
 	Throws: RepoTransactionNotExist
 	"""
-	pass
+	return controller.cancelRepoTransaction(transaction)
+
+
+
+def rerateRepoTransaction(transaction):
+	"""
+	[Dictionary] transaction
+
+	Side effect: update the interest rate of the repo transaction in datastore
+
+	Throws: RepoTransactionNotExist
+			CloseCanceledRepoTransaction
+	"""
+	return controller.rerateRepoTransaction(transaction)
