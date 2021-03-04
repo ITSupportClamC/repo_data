@@ -28,6 +28,7 @@ def clearRepoData():
 	return controller.clearRepoData()
 
 
+
 def getRepo( date, status='open', portfolio='all', custodian='all', repoName='all'
 		   , broker='all', hasHairCut='all'):
 	"""
@@ -38,13 +39,29 @@ def getRepo( date, status='open', portfolio='all', custodian='all', repoName='al
 
 
 
+def getRepoTransactionHistory(userTranId):
+	"""
+	[String] userTranId	=> [Iterable] ([Dictionary] transaction)
+	"""
+	return[]
+
+
+
+def getUserTranIdsFromRepoName(repoName):
+	"""
+	[String] repo name => [Iterable] ([String] user tran id)
+	"""
+	return []
+
+
+
 def addRepoMaster(master):
 	"""
 	[Dictionary] master
 
 	Side effect: add the repo master to datastore
 
-	Throws: RepoMasterAlreadyExist
+	Throws: RepoMasterAlreadyExistError
 	"""
 	return controller.addRepoMaster(master)
 
@@ -56,8 +73,8 @@ def addRepoTransaction(transaction):
 
 	Side effect: add the repo transaction to datastore
 
-	Throws: RepoTransactionAlreadyExist
-			RepoMasterNotExist
+	Throws: RepoTransactionAlreadyExistError
+			RepoMasterNotExistError
 	"""
 	return controller.addRepoTransaction(transaction)
 
@@ -69,8 +86,8 @@ def closeRepoTransaction(transaction):
 
 	Side effect: close the repo transaction in datastore
 
-	Throws: RepoTransactionNotExist
-			CloseCanceledRepoTransaction
+	Throws: RepoTransactionNotExistError
+			CloseCanceledRepoTransactionError
 	"""
 	return controller.closeRepoTransaction(transaction)
 
@@ -82,7 +99,7 @@ def cancelRepoTransaction(transaction):
 
 	Side effect: cancel the repo transaction in datastore
 
-	Throws: RepoTransactionNotExist
+	Throws: RepoTransactionNotExistError
 	"""
 	return controller.cancelRepoTransaction(transaction)
 
@@ -94,7 +111,6 @@ def rerateRepoTransaction(transaction):
 
 	Side effect: update the interest rate of the repo transaction in datastore
 
-	Throws: RepoTransactionNotExist
-			CloseCanceledRepoTransaction
+	Throws: RepoTransactionNotExistError
 	"""
 	return controller.rerateRepoTransaction(transaction)
