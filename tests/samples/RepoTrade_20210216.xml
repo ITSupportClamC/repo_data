@@ -1,0 +1,31 @@
+<ReverseRepo_InsertUpdate>
+<KeyValue KeyName="UserTranId1">309633</KeyValue>
+<UserTranId1>309633</UserTranId1>
+<Portfolio>TEST_R</Portfolio>
+<LocationAccount>BOCHK</LocationAccount>
+<Investment>Isin=XS2178949561</Investment>
+<EventDate>2021-02-09T00:00:00</EventDate>
+<SettleDate>2021-02-09T00:00:00</SettleDate>
+<ActualSettleDate>2021-03-11T00:00:00</ActualSettleDate>
+<Quantity>114494.03</Quantity>
+<CounterInvestment>USD</CounterInvestment>
+<Price>108.096</Price>
+<NetCounterAmount>100000.0</NetCounterAmount>
+<RepoName>MMRPE121SS</RepoName>
+<Strategy>Default</Strategy>
+<Coupon>0.95</Coupon>
+<LoanAmount>100000.0</LoanAmount>
+<Broker>BNP-REPO</Broker>
+<AccrualDaysPerMonth>Actual</AccrualDaysPerMonth>
+<AccrualDaysPerYear>360</AccrualDaysPerYear>
+<AccruedInterest>CALC</AccruedInterest>
+<FundStructure>CALC</FundStructure>
+</ReverseRepo_InsertUpdate>
+<ReverseRepo_InsertUpdate>
+<KeyValue KeyName="UserTranId1">309633</KeyValue>
+<UserTranId1>309633</UserTranId1>
+<ActualSettleDate>2021-02-16T00:00:00</ActualSettleDate>
+<OpenEnded>CALC</OpenEnded>
+<AccruedInterest>CALC</AccruedInterest>
+<FundStructure>CALC</FundStructure>
+</ReverseRepo_InsertUpdate>

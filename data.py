@@ -32,8 +32,7 @@ def clearRepoData():
 def getRepo( date, status='open', portfolio='all', custodian='all', repoName='all'
 		   , broker='all', hasHairCut='all'):
 	"""
-	[String] date (yyyy-mm-dd)
-		=> [Iterable] repo transactions
+	[String] date (yyyy-mm-dd) => [Iterable] repo transactions
 	"""
 	return controller.getRepo(date, status, portfolio, custodian, repoName, broker, hasHairCut)
 
