@@ -84,13 +84,134 @@ class RepoTransactionServices:
 			session.close()
 
 	def cancel(self, transaction):
-		pass
+		try:
+			session = sessionmaker(bind=self.db)()
+			repo_trans_to_cxl = session.query(RepoTransaction) \
+								.filter_by(transaction_id=transaction['transaction_id']) \
+								.first()
+			#-- throw error if transaction not exists
+			if not bool(repo_trans_to_cxl):
+				message = "transaction_id: " + \
+							transaction['transaction_id'] + \
+							" not exists"
+				self.logger.warn(message)
+				raise RepoTransactionNotExistError(message)
+			#-- update transaction by updating the status to cancel
+			repo_trans_to_cxl.status = Constants.REPO_TRANS_STATUS_CANCEL
+			#-- add a record to the transaction history
+			transaction_history = {
+				"transaction_id" : repo_trans_to_cxl.transaction_id,
+				"action" : Constants.REPO_TRANS_HISTORY_ACTION_CANCEL,
+				"date" : datetime.today().strftime('%Y-%m-%d'),
+				"interest_rate" : 0
+			}
+			repo_transaction_history = RepoTransactionHistory(**transaction_history)
+			session.add(repo_transaction_history)
+			session.commit()
+			self.logger.info("Record " +  repo_trans_to_cxl.transaction_id + " updated successfully")
+		except RepoTransactionNotExistError:
+			#-- avoid RepoTransactionNotExistError being captured by Exception
+			raise
+		except Exception as e:
+			self.logger.error("Failed to update transaction")
+			self.logger.error(e)
+			raise
+		finally:
+			session.close()
 
 	def close(self, transaction):
-		pass
+		try:
+			session = sessionmaker(bind=self.db)()
+			repo_trans_to_cls = session.query(RepoTransaction) \
+								.filter_by(transaction_id=transaction['transaction_id']) \
+								.first()
+			#-- throw error if transaction not exists
+			if not bool(repo_trans_to_cls):
+				message = "transaction_id: " + \
+							transaction['transaction_id'] + \
+							" not exists"
+				self.logger.warn(message)
+				raise RepoTransactionNotExistError(message)
+			#-- throw error if transaction has been closed or canceled
+			if repo_trans_to_cls.status == Constants.REPO_TRANS_STATUS_CANCEL or \
+					repo_trans_to_cls.status == Constants.REPO_TRANS_STATUS_CLOSE:
+				message = "transaction_id: " + \
+							transaction['transaction_id'] + \
+							". is either closed or canceled"
+				self.logger.warn(message)
+				raise CloseCanceledRepoTransactionError(message)
+			#-- update transaction by updating the status to cancel
+			repo_trans_to_cls.status = Constants.REPO_TRANS_STATUS_CLOSE
+			#-- add a record to the transaction history
+			transaction_history = {
+				"transaction_id" : repo_trans_to_cls.transaction_id,
+				"action" : Constants.REPO_TRANS_HISTORY_ACTION_CLOSE,
+				"date" : transaction["maturity_date"],
+				"interest_rate" : 0
+			}
+			repo_transaction_history = RepoTransactionHistory(**transaction_history)
+			session.add(repo_transaction_history)
+			session.commit()
+			self.logger.info("Record " +  repo_trans_to_cls.transaction_id + " updated successfully")
+		except RepoTransactionNotExistError:
+			#-- avoid RepoTransactionNotExistError being captured by Exception
+			raise
+		except CloseCanceledRepoTransactionError:
+			#-- avoid CloseCanceledRepoTransactionError being captured by Exception
+			raise
+		except Exception as e:
+			self.logger.error("Failed to update transaction")
+			self.logger.error(e)
+			raise
+		finally:
+			session.close()
 
 	def rerate(self, transaction):
-		pass
+		try:
+			session = sessionmaker(bind=self.db)()
+			repo_trans_to_rerate = session.query(RepoTransaction) \
+								.filter_by(transaction_id=transaction['transaction_id']) \
+								.first()
+			#-- throw error if transaction not exists
+			if not bool(repo_trans_to_rerate):
+				message = "transaction_id: " + \
+							transaction['transaction_id'] + \
+							" not exists"
+				self.logger.warn(message)
+				raise RepoTransactionNotExistError(message)
+			#-- throw error if transaction has been closed or canceled
+			if repo_trans_to_rerate.status == Constants.REPO_TRANS_STATUS_CANCEL or \
+					repo_trans_to_rerate.status == Constants.REPO_TRANS_STATUS_CLOSE:
+				message = "transaction_id: " + \
+							transaction['transaction_id'] + \
+							". is either closed or canceled"
+				self.logger.warn(message)
+				raise CloseCanceledRepoTransactionError(message)
+			#-- update transaction by updating the status to cancel
+			repo_trans_to_rerate.interest_rate = transaction["interest_rate"]
+			#-- add a record to the transaction history
+			transaction_history = {
+				"transaction_id" : repo_trans_to_rerate.transaction_id,
+				"action" : Constants.REPO_TRANS_HISTORY_ACTION_RERATE,
+				"date" : transaction["rate_date"],
+				"interest_rate" : repo_trans_to_rerate.interest_rate
+			}
+			repo_transaction_history = RepoTransactionHistory(**transaction_history)
+			session.add(repo_transaction_history)
+			session.commit()
+			self.logger.info("Record " +  repo_trans_to_rerate.transaction_id + " updated successfully")
+		except RepoTransactionNotExistError:
+			#-- avoid RepoTransactionNotExistError being captured by Exception
+			raise
+		except CloseCanceledRepoTransactionError:
+			#-- avoid CloseCanceledRepoTransactionError being captured by Exception
+			raise
+		except Exception as e:
+			self.logger.error("Failed to update transaction")
+			self.logger.error(e)
+			raise
+		finally:
+			session.close()
 
 	def query(self, params):
 		try:

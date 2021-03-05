@@ -156,12 +156,60 @@ class AppController:
 		return 0
 
 	def cancelRepoTransaction(self, transaction):
+		if self.dbmode is None:
+			raise DataStoreNotYetInitializeError("Plase call initializeDatastore to initialize datastore")
+		v = AppValidatorFactory().get_validator("cancelRepoTransaction")
+		#-- validate input fields
+		if not v.validate(transaction):
+			message = "Input validation error. Details: " + str(v.errors)
+			self.logger.error(message)
+			raise ValueError(message)
+		#-- create data model
+		data_transaction = {
+			"transaction_id" : transaction["UserTranId1"]
+		}
+		self.repo_transaction_services.cancel(data_transaction)
 		return 0
 
 	def closeRepoTransaction(self, transaction):
+		if self.dbmode is None:
+			raise DataStoreNotYetInitializeError("Plase call initializeDatastore to initialize datastore")
+		v = AppValidatorFactory().get_validator("closeRepoTransaction")
+		#-- validate input fields
+		if not v.validate(transaction):
+			message = "Input validation error. Details: " + str(v.errors)
+			self.logger.error(message)
+			raise ValueError(message)
+		#-- data parsing
+		#-- maturity_date
+		maturity_date = transaction["ActualSettleDate"][0:10]
+		#-- create data model
+		data_transaction = {
+			"transaction_id" : transaction["UserTranId1"],
+			"maturity_date" : maturity_date
+		}
+		self.repo_transaction_services.close(data_transaction)
 		return 0
 
 	def rerateRepoTransaction(self, transaction):
+		if self.dbmode is None:
+			raise DataStoreNotYetInitializeError("Plase call initializeDatastore to initialize datastore")
+		v = AppValidatorFactory().get_validator("rerateRepoTransaction")
+		#-- validate input fields
+		if not v.validate(transaction):
+			message = "Input validation error. Details: " + str(v.errors)
+			self.logger.error(message)
+			raise ValueError(message)
+		#-- data parsing
+		#-- rate_date
+		rate_date = transaction["RateTable"]["RateDate"][0:10]
+		#-- create data model
+		data_transaction = {
+			"transaction_id" : transaction["UserTranId1"],
+			"interest_rate" : transaction["RateTable"]["Rate"],
+			"rate_date" : rate_date
+		}
+		self.repo_transaction_services.rerate(data_transaction)
 		return 0
 	
 	def getRepo( self, date, status='open', portfolio='all', custodian='all', repo_code='all'

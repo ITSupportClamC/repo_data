@@ -16,10 +16,6 @@ class RepoTransactionAlreadyExistError(Exception):
     def __init__(self, msg):
         super().__init__(msg)
 
-class RepoMasterNotExistError(Exception):
-    def __init__(self, msg):
-        super().__init__(msg)
-
 class RepoTransactionNotExistError(Exception):
     def __init__(self, msg):
         super().__init__(msg)
