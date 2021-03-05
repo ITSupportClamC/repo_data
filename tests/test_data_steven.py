@@ -4,7 +4,8 @@
 import unittest2
 from repo_data.constants import Constants
 from repo_data.data import initializeDatastore, clearRepoData, getRepo
-from repo_data.repo_datastore import saveRepoMasterFileToDB, saveRepoTradeFileToDB
+from repo_data.repo_datastore import saveRepoMasterFileToDB, saveRepoTradeFileToDB \
+									, saveRepoRerateFileToDB
 from steven_utils.utility import mergeDict
 from toolz.functoolz import compose
 from functools import partial
@@ -56,3 +57,59 @@ class TestDatastore(unittest2.TestCase):
 
 		self.assertEqual(0, len(getRepo('2001-01-01')))
 		self.assertEqual(1, len(getRepo('2001-01-01', status='closed')))
+
+
+
+	def testAll(self):
+		"""
+		Add 7 repo positions, 3 of type OPEN, 4 of type fixed term.
+		Then close 1, cancel 1, both of type OPEN.
+		"""
+		clearRepoData()
+		self.assertEqual(7, saveRepoMasterFileToDB(
+			join(getCurrentDir(), 'samples', 'RepoMaster_20210305_20210305154653.xml')))
+
+		self.assertEqual(9, saveRepoTradeFileToDB(
+			join(getCurrentDir(), 'samples', 'RepoTrade_20210305_20210305155621.xml')))
+
+		# all open repos, use a very early date to avoid any maturity
+		data = getRepo('2001-01-01')
+		self.assertEqual(5, len(data))
+		self.verifyHKDRepoPosition(data)
+
+		# there is one matured on 03-05
+		self.assertEqual(4, len(getRepo('2021-03-05')))
+
+		# there is one manually closed repo
+		self.assertEqual(1, len(getRepo('2001-01-01', status='closed')))
+
+		# one 2021-03-05, there is one manually closed repo and one 
+		# matured repo
+		self.assertEqual(2, len(getRepo('2021-03-05', status='closed')))
+
+		# there is one repo canceled
+		self.assertEqual(1, len(getRepo('2001-03-05', status='canceled')))
+
+
+
+	def verifyHKDRepoPosition(self, data):
+		position = list(filter(lambda p: p['Currency'] == 'HKD', data))[0]
+		self.assertEqual('316444', position['TransactionId'])
+		self.assertEqual('RR', position['Type'])
+		self.assertEqual('TEST_R', position['Portfolio'])
+		self.assertEqual('BOCHK', position['Custodian'])
+		self.assertEqual('ISIN', position['CollateralIDType'])
+		self.assertEqual('HK0000163607', position['CollateralID'])
+		self.assertEqual('2021-01-04', position['TradeDate'])
+		self.assertEqual('2021-01-08', position['SettleDate'])
+		self.assertEqual(True, position['IsOpenRepo'])
+		self.assertEqual('', position['MaturityDate'])
+		self.assertEqual(150000, position['Quantity'])
+		self.assertEqual('HKD', position['Currency'])
+		self.assertAlmostEqual(76.590277, position['Price'], 6)
+		self.assertEqual(100000, position['CollateralValue'])
+		self.assertEqual('MMRPEA24TS', position['RepoName'])
+		self.assertEqual('BB', position['Broker'])
+		self.assertEqual(0, position['Haircut'])
+		self.assertEqual('open', position['Status'])
+		self.assertEqual('ACT/360', position['DayCount'])
