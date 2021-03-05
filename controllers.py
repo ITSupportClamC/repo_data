@@ -112,7 +112,7 @@ class AppController:
 			raise InvalidRepoTransactionTypeError(message)
 		#-- get collaterial type and id
 		investment_split = transaction["Investment"].split("=", 1)
-		collateral_id_type = investment_split[0]
+		collateral_id_type = investment_split[0].upper()
 		collateral_id = investment_split[1]
 		is_open_repo = 0
 		#-- is_open_repo

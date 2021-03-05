@@ -266,16 +266,16 @@ class RepoTransactionServices:
 					RepoTransaction.transaction_type.label("Type"), \
 					RepoTransaction.portfolio.label("Portfolio"), \
 					RepoTransaction.custodian.label("Custodian"), \
-					RepoTransaction.collateral_id_type.label("TransactionId"), \
-					RepoTransaction.collateral_id.label("CollateralIDType"), \
-					RepoTransaction.collateral_global_id.label("CollateralID"), \
+					RepoTransaction.collateral_id_type.label("CollateralIDType"), \
+					RepoTransaction.collateral_id.label("CollateralID"), \
+					RepoTransaction.collateral_global_id.label("CollateralGlobalID"), \
 					RepoTransaction.trade_date.label("TradeDate"), \
 					RepoTransaction.settle_date.label("SettleDate"), \
 					RepoTransaction.is_open_repo.label("IsOpenRepo"), \
 					RepoTransaction.maturity_date.label("MaturityDate"), \
 					RepoTransaction.quantity.label("Quantity"), \
 					RepoTransaction.currency.label("Currency"), \
-					RepoTransaction.price.label("PriceFrom"), \
+					RepoTransaction.price.label("Price"), \
 					RepoTransaction.collateral_value.label("CollateralValue"), \
 					RepoTransaction.repo_code.label("RepoName"), \
 					RepoTransaction.interest_rate.label("InterestRate"), \
@@ -297,12 +297,17 @@ class RepoTransactionServices:
 						d[column] = str(getattr(row, column))[0:10]
 					elif column == "Quantity" or \
 							column == "Quantity" or \
-							column == "PriceFrom" or \
+							column == "Price" or \
 							column == "CollateralValue" or \
 							column == "InterestRate" or \
 							column == "LoanAmount" or \
 							column == "Haircut":
 						d[column] = float(getattr(row, column))
+					elif column == "IsOpenRepo":
+						if getattr(row, column) == 1:
+							d[column] = True
+						else:
+							d[column] = False
 					else:
 						d[column] = str(getattr(row, column))
 				return d
