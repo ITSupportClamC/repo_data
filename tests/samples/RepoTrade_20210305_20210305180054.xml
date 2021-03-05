@@ -1,0 +1,23 @@
+<ReverseRepo_InsertUpdate>
+<KeyValue KeyName="UserTranId1">316819</KeyValue>
+<UserTranId1>316819</UserTranId1>
+<Portfolio>TEST_R</Portfolio>
+<LocationAccount>BOCHK</LocationAccount>
+<Investment>Isin=XS2178949561</Investment>
+<EventDate>2021-01-15T00:00:00</EventDate>
+<SettleDate>2021-01-18T00:00:00</SettleDate>
+<ActualSettleDate>CALC</ActualSettleDate>
+<OpenEnded>CALC</OpenEnded>
+<Quantity>200000.0</Quantity>
+<CounterInvestment>HKD</CounterInvestment>
+<Price>75.01166344</Price>
+<NetCounterAmount>128820.33</NetCounterAmount>
+<RepoName>MMRPE124V0</RepoName>
+<Strategy>Default</Strategy>
+<Coupon>1.0</Coupon>
+<LoanAmount>128820.33</LoanAmount>
+<Broker>SOCG-REPO</Broker>
+<AccrualDaysPerMonth>Actual</AccrualDaysPerMonth>
+<AccrualDaysPerYear>365</AccrualDaysPerYear>
+<FundStructure>CALC</FundStructure>
+</ReverseRepo_InsertUpdate>

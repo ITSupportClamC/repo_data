@@ -1,0 +1,23 @@
+<Bond_InsertUpdate>
+<KeyValue KeyName="Code">MMRPE124V0</KeyValue>
+<Code>MMRPE124V0</Code>
+<Description>MMRPE124V0</Description>
+<AssetType>FI</AssetType>
+<BifurcationCurrency>HKD</BifurcationCurrency>
+<CouponFreq>Annual</CouponFreq>
+<DatedDate>2001-01-01T00:00:00</DatedDate>
+<Exchange>OTC</Exchange>
+<IncomeCurrency>HKD</IncomeCurrency>
+<InvestmentType>REPO</InvestmentType>
+<IssueCountry>HK</IssueCountry>
+<IssueDate>2001-01-01T00:00:00</IssueDate>
+<MaturityDate>2199-12-31T00:00:00</MaturityDate>
+<PricingFactor>0.01</PricingFactor>
+<PrincipalCurrency>HKD</PrincipalCurrency>
+<QuantityPrecision>0</QuantityPrecision>
+<RiskCurrency>HKD</RiskCurrency>
+<TradingFactor>1</TradingFactor>
+<AccrualDaysPerMonth>Actual</AccrualDaysPerMonth>
+<AccrualDaysPerYear>365</AccrualDaysPerYear>
+<RepoAgreementFlag>1</RepoAgreementFlag>
+</Bond_InsertUpdate>
