@@ -12,3 +12,8 @@
   - All API will close the sqlalchemy session after each call automatically to avoid db connection leak. So no need to explicitly call a function to close DB connection
   - Database creation SQL script added to folder `sql`
 
+## v1.1.0
+
+### Changed
+
+- Added closeRepoTransaction, cancelRepoTransaction, rerateRepoTransaction and their test cases

@@ -208,13 +208,113 @@ class TestRepoDataAPI(unittest2.TestCase):
 			addRepoTransaction(transaction)
 
 	def testCancelRepoTransaction(self):
-		pass
+		#-- 1. create repo_master, repo_transaction and cancel the transaction normally	
+		master = self._get_test_repo_master()
+		addRepoMaster(master)
+		transaction = self._get_test_transaction()
+		addRepoTransaction(transaction)
+		cancel_transaction = {
+			"UserTranId1" : "300734"
+		}
+		self.assertEqual(cancelRepoTransaction(cancel_transaction), 0)
+		session = sessionmaker(bind=DBConn.get_db(self.unittest_dbmode))()
+		transaction_result = session.query(RepoTransaction) \
+								.filter_by(transaction_id=cancel_transaction['UserTranId1']) \
+								.first()
+		self.assertEqual(Constants.REPO_TRANS_STATUS_CANCEL, transaction_result.status)
+		session.close()
+		#-- 2. cancel the transaction again. Unlike close or rerate, it will work normally 
+		#--    without throwing CloseCanceledRepoTransactionError
+		self.assertEqual(cancelRepoTransaction(cancel_transaction), 0)
+		#-- 3. cancel an unknown transaction to confirm RepoTransactionNotExistError will throw
+		unknown_transaction = {
+			"UserTranId1" : "300734x"
+		}
+		with self.assertRaises(RepoTransactionNotExistError):
+			cancelRepoTransaction(unknown_transaction)
 
 	def testCloseRepoTransaction(self):
-		pass
+		#-- 1. create repo_master, repo_transaction and close the transaction normally	
+		master = self._get_test_repo_master()
+		addRepoMaster(master)
+		transaction = self._get_test_transaction()
+		addRepoTransaction(transaction)
+		close_transaction = {
+			"UserTranId1" : "300734",
+			"ActualSettleDate" : "2018-08-31T00:00:00"
+		}
+		self.assertEqual(closeRepoTransaction(close_transaction), 0)
+		session = sessionmaker(bind=DBConn.get_db(self.unittest_dbmode))()
+		transaction_result = session.query(RepoTransaction) \
+								.filter_by(transaction_id=close_transaction['UserTranId1']) \
+								.first()
+		self.assertEqual(Constants.REPO_TRANS_STATUS_CLOSE, transaction_result.status)
+		session.close()
+		#-- 2. close the transaction again to confirm CloseCanceledRepoTransactionError will throw
+		with self.assertRaises(CloseCanceledRepoTransactionError):
+			closeRepoTransaction(close_transaction)
+		#-- 3. close an unknown transaction to confirm RepoTransactionNotExistError will throw
+		unknown_transaction = {
+			"UserTranId1" : "300734x",
+			"ActualSettleDate" : "2018-08-31T00:00:00"
+		}
+		with self.assertRaises(RepoTransactionNotExistError):
+			closeRepoTransaction(unknown_transaction)
 
 	def testRerateRepoTransaction(self):
-		pass
+		#-- 1. create repo_master, repo_transaction and rerate the transaction normally	
+		master = self._get_test_repo_master()
+		addRepoMaster(master)
+		transaction = self._get_test_transaction()
+		addRepoTransaction(transaction)
+		rerate_transaction = {
+			"UserTranId1" : "300734",
+			"RateTable" : {
+				"Rate" : "1.6565",
+				"RateDate" : "2020-12-31T00:00:00"
+			}
+		}
+		self.assertEqual(rerateRepoTransaction(rerate_transaction), 0)
+		session = sessionmaker(bind=DBConn.get_db(self.unittest_dbmode))()
+		transaction_result = session.query(RepoTransaction) \
+								.filter_by(transaction_id=rerate_transaction['UserTranId1']) \
+								.first()
+		self.assertEqual(1.6565, transaction_result.interest_rate)
+		session.commit()
+		#-- 2. rerate the transaction again and shall have no problem
+		rerate_transaction = {
+			"UserTranId1" : "300734",
+			"RateTable" : {
+				"Rate" : "1.4992",
+				"RateDate" : "2020-12-31T00:00:00"
+			}
+		}
+		self.assertEqual(rerateRepoTransaction(rerate_transaction), 0)
+		transaction_result = session.query(RepoTransaction) \
+								.filter_by(transaction_id=rerate_transaction['UserTranId1']) \
+								.first()
+		self.assertEqual(1.4992, transaction_result.interest_rate)
+		session.close()
+		#-- 3. rerate the transaction with invalid RateTable
+		invalid_transaction = {
+			"UserTranId1" : "300734",
+			"RateTable" : {
+				"Rate" : "1.6565x",
+				"RateDate" : "2020-12-31T00:00:00"
+			}
+		}
+		with self.assertRaises(ValueError):
+			rerateRepoTransaction(invalid_transaction)
+		#-- 4. rerate an unknown transaction to confirm RepoTransactionNotExistError will throw
+		unknown_transaction = {
+			"UserTranId1" : "300734x",
+			"RateTable" : {
+				"Rate" : "1.5",
+				"RateDate" : "2020-12-31T00:00:00"
+			}
+		}
+		with self.assertRaises(RepoTransactionNotExistError):
+			rerateRepoTransaction(unknown_transaction)
 
 	def testGetRepo(self):
 		#-- preprocess: add 2 repo master and 6 transaction
@@ -472,14 +572,14 @@ class TestRepoDataAPI(unittest2.TestCase):
 				date='2020-03-09',
 				custodian='BOCHK'
 				)
-		self.assertEqual(5, len(res))
+		self.assertEqual(3, len(res))
 		#-- 4. normal query repoName
 		#-- 5.1 repoName: normal value (search status default input 'open')
 		res = getRepo(
 				date='2020-03-09',
 				repoName='MMRPE420BS-2'
 				)
-		self.assertEqual(3, len(res))
+		self.assertEqual(1, len(res))
 		#-- 5.2 repoName: empty result
 		res = getRepo(
 				date='2020-03-09',
@@ -492,7 +592,7 @@ class TestRepoDataAPI(unittest2.TestCase):
 				date='2020-03-09',
 				broker='BOC-REPO'
 				)
-		self.assertEqual(3, len(res))
+		self.assertEqual(1, len(res))
 		#-- 6.2 repoName: normal and status cancel
 		res = getRepo(
 				date='2020-03-09',
