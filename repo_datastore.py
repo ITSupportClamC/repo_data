@@ -7,7 +7,8 @@
 # any of them.
 # 
 
-from aim_xml.repo_data import getRawDataFromXML, getRepoTradeFromFile
+from aim_xml.repo_data import getRawDataFromXML, getRepoTradeFromFile \
+							, getRepoRerateFromFile
 from repo_data.data import addRepoMaster, addRepoTransaction \
 						, cancelRepoTransaction, closeRepoTransaction \
 						, rerateRepoTransaction, initializeDatastore \
@@ -131,4 +132,49 @@ def saveRepoTradeFileToDB(file):
 		sum
 	  , partial(map, addRepo)
 	  , getRepoTradeFromFile
+	)(file)
+
+
+
+def saveRepoRerateFileToDB(file):
+	"""
+	[String] repo rerate file (without Geneva header) 
+		=> [Int] no. of rerate actions saved into datastore
+	"""
+	logger.debug('saveRepoRerateFileToDB(): {0}'.format(file))
+
+	def rerateEntry(el):
+		"""
+		[Dictionary] el => [Dictionary] rerate entry
+		"""
+		if el['Loan'].startswith('UserTranId1='):
+			return { 'UserTranId1': el['Loan'][12:]
+				   , 'RateDate': el['RateTable']['RateDate']
+				   , 'Rate': el['RateTable']['Rate']
+				   }
+		else:
+			logger.error('saveRepoRerateFileToDB(): failed to find UserTranId1: {0}'.format(
+						el['Loan']))
+			raise ValueError
+
+
+	def addRepo(el):
+		try:
+			logger.debug('saveRepoRerateFileToDB(): add repo rerate id {0}'.format(
+						el['UserTranId1']))
+			print(el)
+			rerateRepoTransaction(el)
+			return 1
+
+		except:
+			logger.exception('saveRepoRerateFileToDB()')
+			return 0
+
+
+	return \
+	compose(
+		sum
+	  , partial(map, addRepo)
+	  , partial(map, rerateEntry)
+	  , getRepoRerateFromFile
 	)(file)
