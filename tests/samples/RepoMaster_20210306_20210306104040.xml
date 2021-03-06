@@ -1,0 +1,23 @@
+<Bond_InsertUpdate>
+<KeyValue KeyName="Code">MMRPED25JL</KeyValue>
+<Code>MMRPED25JL</Code>
+<Description>MMRPED25JL</Description>
+<AssetType>FI</AssetType>
+<BifurcationCurrency>USD</BifurcationCurrency>
+<CouponFreq>Annual</CouponFreq>
+<DatedDate>2001-01-01T00:00:00</DatedDate>
+<Exchange>OTC</Exchange>
+<IncomeCurrency>USD</IncomeCurrency>
+<InvestmentType>REPO</InvestmentType>
+<IssueCountry>HK</IssueCountry>
+<IssueDate>2001-01-01T00:00:00</IssueDate>
+<MaturityDate>2199-12-31T00:00:00</MaturityDate>
+<PricingFactor>0.01</PricingFactor>
+<PrincipalCurrency>USD</PrincipalCurrency>
+<QuantityPrecision>0</QuantityPrecision>
+<RiskCurrency>USD</RiskCurrency>
+<TradingFactor>1</TradingFactor>
+<AccrualDaysPerMonth>Actual</AccrualDaysPerMonth>
+<AccrualDaysPerYear>365</AccrualDaysPerYear>
+<RepoAgreementFlag>1</RepoAgreementFlag>
+</Bond_InsertUpdate>
