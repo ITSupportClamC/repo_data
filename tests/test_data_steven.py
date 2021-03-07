@@ -72,8 +72,8 @@ class TestDatastore(unittest2.TestCase):
 		self.assertEqual(9, saveRepoTradeFileToDB(
 			join(getCurrentDir(), 'samples', 'RepoTrade_20210305_20210305155621.xml')))
 
-		# all open repos, use a very early date to avoid any maturity
-		data = getRepo('2001-01-01')
+		# all repos that are still open as of 2021-02-04
+		data = getRepo('2021-02-04')
 		self.assertEqual(5, len(data))
 		self.verifyHKDRepoPosition(data)
 		self.verifyUSDRepoPosition(data)
@@ -99,11 +99,14 @@ class TestDatastore(unittest2.TestCase):
 
 	def testAll2(self):
 		"""
-		Add rerate, roll over
+		Add 2 rerate actions to a repo position
 		"""
-		pass
+		self.assertEqual(2, saveRepoRerateFileToDB(
+			join(getCurrentDir(), 'samples', 'Repo_ReRate_20210305_20210305174826.xml')))
+		
 
 
+		
 
 	def verifyHKDRepoPosition(self, data):
 		L = list(filter(lambda p: p['Currency'] == 'HKD', data))
