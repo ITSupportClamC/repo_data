@@ -212,12 +212,11 @@ class AppController:
 		self.repo_transaction_services.rerate(data_transaction)
 		return 0
 	
-	def getRepo( self, date, status='open', portfolio='all', custodian='all', repo_code='all'
+	def getRepo( self, status='openclose', portfolio='all', custodian='all', repo_code='all'
 		   , broker='all', has_hair_cut='all'):
 		if self.dbmode is None:
 			raise DataStoreNotYetInitializeError("Plase call initializeDatastore to initialize datastore")
 		params = {
-			"date" : date,
 			"status" : status,
 			"portfolio" : portfolio,
 			"custodian" : custodian,
@@ -233,3 +232,33 @@ class AppController:
 			raise ValueError(message)
 		transactions = self.repo_transaction_services.query(params)
 		return transactions
+
+	def getRepoTransactionHistory(self, userTranId):
+		if self.dbmode is None:
+			raise DataStoreNotYetInitializeError("Plase call initializeDatastore to initialize datastore")
+		params = {
+			"transaction_id" : userTranId
+		}
+		v = AppValidatorFactory().get_validator("getRepoTransactionHistory")
+		#-- validate input fields
+		if not v.validate(params):
+			message = "Input validation error. Details: " + str(v.errors)
+			self.logger.error(message)
+			raise ValueError(message)
+		transaction_histories = self.repo_transaction_history_services.query(params)
+		return transaction_histories
+
+	def getUserTranIdsFromRepoName(self, repoName):
+		if self.dbmode is None:
+			raise DataStoreNotYetInitializeError("Plase call initializeDatastore to initialize datastore")
+		params = {
+			"repo_code" : repoName
+		}
+		v = AppValidatorFactory().get_validator("getUserTranIdsFromRepoName")
+		#-- validate input fields
+		if not v.validate(params):
+			message = "Input validation error. Details: " + str(v.errors)
+			self.logger.error(message)
+			raise ValueError(message)
+		transaction_ids = self.repo_transaction_services.getUserTranIdsFromRepoName(params)
+		return transaction_ids

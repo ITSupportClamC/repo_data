@@ -14,6 +14,8 @@ from repo_data.data import (addRepoMaster,
 							clearRepoData,
                             closeRepoTransaction, 
 							getRepo, 
+							getRepoTransactionHistory, 
+							getUserTranIdsFromRepoName, 
 							initializeDatastore,
 							rerateRepoTransaction)
 from repo_data.models.repo_master import RepoMaster
@@ -454,10 +456,9 @@ class TestRepoDataAPI(unittest2.TestCase):
 		}
 		closeRepoTransaction(close_transaction)
 		#-- 1. invalid value
-		#-- 1.1 wrong date
+		#-- 1.1 wrong status
 		with self.assertRaises(ValueError):
 			getRepo(
-				date='2020-12-32',
 				status='open',
 				portfolio='all',
 				custodian='all',
@@ -468,30 +469,23 @@ class TestRepoDataAPI(unittest2.TestCase):
 		#-- 1.2 wrong hasHairCut
 		with self.assertRaises(ValueError):
 			getRepo(
-				date='2020-12-32',
 				hasHairCut='0'
 				)
 		#-- 2. normal query status
-		#-- 2.1 status: open (default)
-		res = getRepo(
-				date='2020-03-09'
-			)
+		#-- 2.1 status: openclose
+		res = getRepo()
 		with DBConn.get_db(self.unittest_dbmode).connect() as con:
 			count = con.execute("""
 								SELECT count(transaction_id)  
 								FROM repo_transactions
-								where status='open' 
-								and (
-									is_open_repo=True
-									or maturity_date > '2020-03-09'
-									)
+								where 
+								(status='open' or status='closed')
 								""").scalar()
 			con.close()
 		self.assertEqual(count, len(res))
-		#-- 2.2 status: closed
+		#-- 2.2 status: all parameters inputted with default value
 		res = getRepo(
-				date='2020-03-09',
-				status='closed',
+				status='openclose',
 				portfolio='all',
 				custodian='all',
 				repoName='all',
@@ -500,20 +494,15 @@ class TestRepoDataAPI(unittest2.TestCase):
 				)
 		with DBConn.get_db(self.unittest_dbmode).connect() as con:
 			count = con.execute("""
-								SELECT count(transaction_id) 
+								SELECT count(transaction_id)  
 								FROM repo_transactions
-								where status = 'closed' 
-								or (
-									is_open_repo = 0
-									and maturity_date <= '2020-03-09'
-									and status != 'canceled'
-									);
+								where 
+								(status='open' or status='closed')
 								""").scalar()
 			con.close()
 		self.assertEqual(count, len(res))
 		#-- 2.3 status: cancel
 		res = getRepo(
-				date='2020-03-09',
 				status='canceled',
 				portfolio='all',
 				custodian='all',
@@ -521,9 +510,16 @@ class TestRepoDataAPI(unittest2.TestCase):
 				broker='all',
 				hasHairCut='all'
 				)
+		with DBConn.get_db(self.unittest_dbmode).connect() as con:
+			count = con.execute("""
+								SELECT count(transaction_id)  
+								FROM repo_transactions
+								where 
+								(status='canceled')
+								""").scalar()
+			con.close()
 		#-- 2.4 status: all
 		res = getRepo(
-				date='2020-03-09',
 				status='all'
 				)
 		with DBConn.get_db(self.unittest_dbmode).connect() as con:
@@ -536,25 +532,20 @@ class TestRepoDataAPI(unittest2.TestCase):
 		#-- 3. normal query portfolio
 		#-- 3.1 porfolio: english
 		res = getRepo(
-				date='2020-03-09',
 				portfolio='12734'
 				)
 		with DBConn.get_db(self.unittest_dbmode).connect() as con:
 			count = con.execute("""
 								SELECT count(transaction_id)  
 								FROM repo_transactions
-								where status='open' 
-								and (
-									is_open_repo=True
-									or maturity_date > '2020-03-09'
-									)
+								where 
+								(status='open' or status='closed')
 								and portfolio='12734'
 								""").scalar()
 			con.close()
 		self.assertEqual(count, len(res))
 		#-- 3.2 porfolio: 中文
 		res = getRepo(
-				date='2020-03-09',
 				status='all',
 				portfolio='中文'
 				)
@@ -562,90 +553,133 @@ class TestRepoDataAPI(unittest2.TestCase):
 		#-- 4. normal query portfolio
 		#-- 4.1 custodian: 中國銀行
 		res = getRepo(
-				date='2020-03-09',
 				status='all',
 				custodian='中國銀行'
 				)
 		self.assertEqual(1, len(res))
 		#-- 4.2 custodian: english
 		res = getRepo(
-				date='2020-03-09',
 				custodian='BOCHK'
 				)
-		self.assertEqual(3, len(res))
+		self.assertEqual(4, len(res))
 		#-- 4. normal query repoName
 		#-- 5.1 repoName: normal value (search status default input 'open')
 		res = getRepo(
-				date='2020-03-09',
 				repoName='MMRPE420BS-2'
 				)
-		self.assertEqual(1, len(res))
+		self.assertEqual(3, len(res))
 		#-- 5.2 repoName: empty result
 		res = getRepo(
-				date='2020-03-09',
 				repoName='--10--'
 				)
 		self.assertEqual(0, len(res))
 		#-- 6. normal query repoName
 		#-- 6.1 repoName: normal value
 		res = getRepo(
-				date='2020-03-09',
 				broker='BOC-REPO'
 				)
-		self.assertEqual(1, len(res))
+		self.assertEqual(3, len(res))
 		#-- 6.2 repoName: normal and status cancel
 		res = getRepo(
-				date='2020-03-09',
-				status='closed',
+				status='openclose',
 				broker='BOC-REPO'
 				)
 		with DBConn.get_db(self.unittest_dbmode).connect() as con:
 			count = con.execute("""
 								SELECT count(transaction_id)
 								FROM repo_transactions
-								where status = 'closed' 
-								or (
-									is_open_repo = 0
-									and maturity_date <= '2020-03-09'
-									and status != 'canceled'
-									)
+								where 
+								(status='open' or status='closed')
 								and broker='BOC-REPO'
 								""").scalar()
 			con.close()
 		self.assertEqual(count, len(res))
 		#-- 6.3 repoName: empty result
 		res = getRepo(
-				date='2020-03-09',
 				broker='--REPO--'
 				)
 		self.assertEqual(0, len(res))
 		#-- 7. normal query repoName
 		#-- 7.1 hasHairCut: true
 		res = getRepo(
-				date='2020-03-09',
 				hasHairCut='True'
 				)
 		self.assertEqual(0, len(res))
 		#-- 7.2 hasHairCut: false and status close
 		res = getRepo(
-				date='2020-03-09',
-				status='closed',
+				status='openclose',
 				hasHairCut='False'
 				)
 		with DBConn.get_db(self.unittest_dbmode).connect() as con:
 			count = con.execute("""
 								SELECT count(transaction_id)
 								FROM repo_transactions
-								where status = 'closed' 
-								or (
-									is_open_repo = 0
-									and maturity_date <= '2020-03-09'
-									and status != 'canceled'
-									)
+								where 
+								(status='open' or status='closed')
 								and haircut = 0
 								""").scalar()
 			con.close()
 		self.assertEqual(count, len(res))
+
+	def testGetRepoTransactionHistory(self):
+		#-- preprocess: add 2 repo master and 6 transaction
+		master1 = self._get_test_repo_master()
+		addRepoMaster(master1)
+		transaction1 = self._get_test_transaction()
+		addRepoTransaction(transaction1)
+		#-- 1. invalid input value
+		#-- 1.1 non-string value
+		with self.assertRaises(ValueError):
+			getRepoTransactionHistory(300734)
+		#-- 2. valid input value 
+		#-- 2.1 empty result
+		res = getRepoTransactionHistory("300734-")
+		self.assertEqual(0, len(res))
+		#-- 2.2 has result
+		res = getRepoTransactionHistory("300734")
+		self.assertEqual(1, len(res))
+		self.assertEqual('300734', res[0]['TransactionId'])
+		self.assertEqual('open', res[0]['Action'])
+		self.assertEqual('2018-08-27', res[0]['Date'])
+		self.assertEqual(0.95, res[0]['InterestRate'])
+		try:
+			datetime.strptime(res[0]['TimeStamp'], "%Y-%m-%d %H:%M:%S")
+		except ValueError:
+			raise ValueError("Incorrect data format, should be YYYY-MM-DD")
+
+	def testGetUserTranIdsFromRepoName(self):
+		#-- preprocess: add 2 repo master and 6 transaction
+		master1 = self._get_test_repo_master()
+		addRepoMaster(master1)
+		master2 = self._get_test_repo_master()
+		master2["Code"] = "MMRPE420BSS"
+		addRepoMaster(master2)
+		transaction1 = self._get_test_transaction()
+		addRepoTransaction(transaction1)
+		transaction2 = self._get_test_transaction()
+		transaction2["UserTranId1"] = "300735"
+		addRepoTransaction(transaction2)
+		transaction2 = self._get_test_transaction()
+		transaction2["UserTranId1"] = "300736"
+		transaction2["RepoName"] = "MMRPE420BSS"
+		addRepoTransaction(transaction2)
+		#-- 1. invalid input value
+		#-- 1.1 non-string value 
+		with self.assertRaises(ValueError):
+			getUserTranIdsFromRepoName(300734)
+		#-- 2. valid input value
+		#-- 2.1 empty result
+		res = getUserTranIdsFromRepoName("nosuchreponame")
+		self.assertEqual(0, len(res))
+		#-- 2.2 has result
+		res = getUserTranIdsFromRepoName("MMRPE420BS")
+		self.assertEqual(2, len(res))
+		self.assertEqual('300734', res[0]['TransactionId'])
+		self.assertEqual('300735', res[1]['TransactionId'])
+		#-- 2.2 has result
+		res = getUserTranIdsFromRepoName("MMRPE420BSS")
+		self.assertEqual(1, len(res))
+		self.assertEqual('300736', res[0]['TransactionId'])
 
 	def _get_test_transaction(self):
 		transaction = {

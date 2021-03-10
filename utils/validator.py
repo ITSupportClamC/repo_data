@@ -22,6 +22,10 @@ class AppValidatorFactory:
 			return self._get_rerate_transaction_validator()
 		elif method_name == "getRepo":
 			return self._get_repo_validator()
+		elif method_name == "getRepoTransactionHistory":
+			return self._get_repo_transaction_history_validator()
+		elif method_name == "getUserTranIdsFromRepoName":
+			return self._get_user_tranids_from_repo_name_validator()
 		else:
 			raise Exception("No validator defined for method_name: " + \
 								method_name + \
@@ -160,12 +164,9 @@ RateTable:
 
 	def _get_repo_validator(self):
 		schema_text = '''
-date:
-  required: true
-  check_with: yyyy_mm_dd_date_format
 status:
   type: string
-  allowed: ['all', 'open', 'closed', 'canceled']
+  allowed: ['all', 'openclose', 'canceled']
 portfolio:
   type: string
   maxlength: 100
@@ -181,6 +182,26 @@ broker:
 has_hair_cut:
   type: string
   allowed: ['all', 'True', 'False', 'true', 'false']
+'''
+		schema = yaml.load(schema_text, Loader=yaml.FullLoader)
+		return AppValidator(schema)
+
+	def _get_repo_transaction_history_validator(self):
+		schema_text = '''
+transaction_id:
+  required: true
+  type: string
+  maxlength: 20
+'''
+		schema = yaml.load(schema_text, Loader=yaml.FullLoader)
+		return AppValidator(schema)
+
+	def _get_user_tranids_from_repo_name_validator(self):
+		schema_text = '''
+repo_code:
+  required: true
+  type: string
+  maxlength: 100
 '''
 		schema = yaml.load(schema_text, Loader=yaml.FullLoader)
 		return AppValidator(schema)
@@ -212,11 +233,14 @@ class AppValidator(Validator):
 			except ValueError:
 				self._error(field, "the first 10 chars of the date must be in yyyy-mm-dd")
 
+	"""
+	#-- comment out as the date in the getRepo() is removed
 	def _check_with_yyyy_mm_dd_date_format(self, field, value):
 		try:
 			datetime.strptime(value, "%Y-%m-%d")
 		except ValueError:
 			self._error(field, "date format must be in yyyy-mm-dd")
+	"""
 
 	def _check_with_actual_or_number_format(self, field, value):
 		if not value.lower() == "actual":

@@ -323,3 +323,122 @@ class RepoTransactionServices:
 			raise
 		finally:
 			session.close()
+
+	def query(self, params):
+		try:
+			session = sessionmaker(bind=self.db)()
+			conditions = []
+			if not params["status"] is None and not params["status"] is "all":
+				if str(params["status"]).lower() == Constants.GETREPO_STATUS_OPENCLOSE:
+					conditions.append(
+						or_(
+								(RepoTransaction.status == Constants.REPO_TRANS_STATUS_OPEN),
+								(RepoTransaction.status == Constants.REPO_TRANS_STATUS_CLOSE)
+							)
+					)
+				elif str(params["status"]).lower() == Constants.REPO_TRANS_STATUS_CANCEL:
+					conditions.append(RepoTransaction.status == params["status"])
+				else:
+					self.logger.warn("Unknown query status: " + str(params["status"]))
+			if not params["portfolio"] is None and not params["portfolio"] is "all":
+				conditions.append(RepoTransaction.portfolio == params["portfolio"])
+			if not params["custodian"] is None and not params["custodian"] is "all":
+				conditions.append(RepoTransaction.custodian == params["custodian"])
+			if not params["repo_code"] is None and not params["repo_code"] is "all":
+				conditions.append(RepoTransaction.repo_code == params["repo_code"])
+			if not params["broker"] is None and not params["broker"] is "all":
+				conditions.append(RepoTransaction.broker == params["broker"])
+			if not params["has_hair_cut"] is None and not params["has_hair_cut"] is "all":
+				if str(params["has_hair_cut"]).lower() == "true":
+					conditions.append(RepoTransaction.haircut != 0)
+				else:
+					conditions.append(RepoTransaction.haircut == 0)
+			#self.logger.debug(str(conditions))
+			transactions = session.query(
+					RepoTransaction.transaction_id.label("TransactionId"), \
+					RepoTransaction.transaction_type.label("Type"), \
+					RepoTransaction.portfolio.label("Portfolio"), \
+					RepoTransaction.custodian.label("Custodian"), \
+					RepoTransaction.collateral_id_type.label("CollateralIDType"), \
+					RepoTransaction.collateral_id.label("CollateralID"), \
+					RepoTransaction.collateral_global_id.label("CollateralGlobalID"), \
+					RepoTransaction.trade_date.label("TradeDate"), \
+					RepoTransaction.settle_date.label("SettleDate"), \
+					RepoTransaction.is_open_repo.label("IsOpenRepo"), \
+					RepoTransaction.maturity_date.label("MaturityDate"), \
+					RepoTransaction.quantity.label("Quantity"), \
+					RepoTransaction.currency.label("Currency"), \
+					RepoTransaction.price.label("Price"), \
+					RepoTransaction.collateral_value.label("CollateralValue"), \
+					RepoTransaction.repo_code.label("RepoName"), \
+					RepoTransaction.interest_rate.label("InterestRate"), \
+					RepoTransaction.loan_amount.label("LoanAmount"), \
+					RepoTransaction.broker.label("Broker"), \
+					RepoTransaction.haircut.label("Haircut"), \
+					RepoTransaction.status.label("Status"),
+					RepoMaster.date_count.label("DayCount")) \
+				.filter(RepoTransaction.repo_code == RepoMaster.code) \
+				.filter(and_(*conditions))
+			#self.logger.debug("Print the generated SQL:")
+			#self.logger.debug(transactions)
+			#-- return as list of dictionary
+			def model2dict(row):
+				d = {}
+				for column in row.keys():
+					if column == "TradeDate" or \
+							column == "SettleDate":
+						d[column] = str(getattr(row, column))[0:10]
+					elif column == "Quantity" or \
+							column == "Quantity" or \
+							column == "Price" or \
+							column == "CollateralValue" or \
+							column == "InterestRate" or \
+							column == "LoanAmount" or \
+							column == "Haircut":
+						d[column] = float(getattr(row, column))
+					elif column == "IsOpenRepo":
+						if getattr(row, column) == 1:
+							d[column] = True
+						else:
+							d[column] = False
+					else:
+						d[column] = str(getattr(row, column))
+				return d
+			transactions_d = [model2dict(t) for t in transactions]
+			#self.logger.error("Print the list of dictionary output:")
+			#self.logger.debug(transactions_d)
+			return transactions_d
+		except Exception as e:
+			self.logger.error("Failed to exceution the query:")
+			self.logger.error(conditions)
+			self.logger.error("Error message:")
+			self.logger.error(e)
+			raise
+		finally:
+			session.close()
+	
+	def getUserTranIdsFromRepoName(self, params):
+		try:
+			session = sessionmaker(bind=self.db)()
+			transactions = session.query(
+					RepoTransaction.transaction_id.label("TransactionId")) \
+				.filter(RepoTransaction.repo_code == params['repo_code']) \
+				.order_by(RepoTransaction.transaction_id)
+			#self.logger.debug("Print the generated SQL:")
+			#self.logger.debug(transactions)
+			#-- return as list of dictionary
+			def model2dict(row):
+				d = {}
+				for column in row.keys():
+					d[column] = str(getattr(row, column))
+				return d
+			transactions_d = [model2dict(t) for t in transactions]
+			#self.logger.error("Print the list of dictionary output:")
+			#self.logger.debug(transactions_d)
+			return transactions_d
+		except Exception as e:
+			self.logger.error("Error message:")
+			self.logger.error(e)
+			raise
+		finally:
+			session.close()

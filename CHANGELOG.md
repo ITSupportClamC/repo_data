@@ -17,3 +17,12 @@
 ### Changed
 
 - Added closeRepoTransaction, cancelRepoTransaction, rerateRepoTransaction and their test cases
+
+## v1.2.0
+
+### Changed
+
+- Added getRepoTransactionHistory, getUserTranIdsFromRepoName and their test cases
+- Adjsut the search parameter logics and update the test cases. Changes as below:
+  - Get rid of the parameter "date"
+  - Change logics of parameter "status" based on the updated requirments

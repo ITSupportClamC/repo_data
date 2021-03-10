@@ -29,12 +29,12 @@ def clearRepoData():
 
 
 
-def getRepo( date, status='open', portfolio='all', custodian='all', repoName='all'
+def getRepo( status='openclose', portfolio='all', custodian='all', repoName='all'
 		   , broker='all', hasHairCut='all'):
 	"""
 	[String] date (yyyy-mm-dd) => [Iterable] repo transactions
 	"""
-	return controller.getRepo(date, status, portfolio, custodian, repoName, broker, hasHairCut)
+	return controller.getRepo(status, portfolio, custodian, repoName, broker, hasHairCut)
 
 
 
@@ -42,7 +42,7 @@ def getRepoTransactionHistory(userTranId):
 	"""
 	[String] userTranId	=> [Iterable] ([Dictionary] transaction)
 	"""
-	return[]
+	return controller.getRepoTransactionHistory(userTranId)
 
 
 
@@ -50,7 +50,7 @@ def getUserTranIdsFromRepoName(repoName):
 	"""
 	[String] repo name => [Iterable] ([String] user tran id)
 	"""
-	return []
+	return controller.getUserTranIdsFromRepoName(repoName)
 
 
 
