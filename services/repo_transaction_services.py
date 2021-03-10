@@ -427,15 +427,13 @@ class RepoTransactionServices:
 			#self.logger.debug("Print the generated SQL:")
 			#self.logger.debug(transactions)
 			#-- return as list of dictionary
-			def model2dict(row):
-				d = {}
+			def model2list(row):
 				for column in row.keys():
-					d[column] = str(getattr(row, column))
-				return d
-			transactions_d = [model2dict(t) for t in transactions]
-			#self.logger.error("Print the list of dictionary output:")
-			#self.logger.debug(transactions_d)
-			return transactions_d
+					return str(getattr(row, column))
+			transactions_l = [model2list(t) for t in transactions]
+			#self.logger.debug("Print the list of transaction_ids output:")
+			#self.logger.debug(transactions_l)
+			return transactions_l
 		except Exception as e:
 			self.logger.error("Error message:")
 			self.logger.error(e)

@@ -674,12 +674,12 @@ class TestRepoDataAPI(unittest2.TestCase):
 		#-- 2.2 has result
 		res = getUserTranIdsFromRepoName("MMRPE420BS")
 		self.assertEqual(2, len(res))
-		self.assertEqual('300734', res[0]['TransactionId'])
-		self.assertEqual('300735', res[1]['TransactionId'])
+		self.assertEqual('300734', res[0])
+		self.assertEqual('300735', res[1])
 		#-- 2.2 has result
 		res = getUserTranIdsFromRepoName("MMRPE420BSS")
 		self.assertEqual(1, len(res))
-		self.assertEqual('300736', res[0]['TransactionId'])
+		self.assertEqual('300736', res[0])
 
 	def _get_test_transaction(self):
 		transaction = {
