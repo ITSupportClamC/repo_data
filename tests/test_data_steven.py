@@ -45,7 +45,7 @@ class TestDatastore(unittest2.TestCase):
 		data = getRepo()	# open or closed repo
 		self.assertEqual(1, len(data))
 		repoName, userTranId = data[0]['RepoName'], data[0]['TransactionId']
-		# self.assertEqual([userTranId], getUserTranIdsFromRepoName(repoName))
+		self.assertEqual([userTranId], getUserTranIdsFromRepoName(repoName))
 
 		data = getRepo(status='canceled')
 		self.assertEqual(1, len(data))
