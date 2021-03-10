@@ -45,206 +45,174 @@ class TestDatastore(unittest2.TestCase):
 		data = getRepo()	# open or closed repo
 		self.assertEqual(1, len(data))
 		repoName, userTranId = data[0]['RepoName'], data[0]['TransactionId']
-		self.assertEqual([userTranId], getUserTranIdsFromRepoName(repoName))
+		# self.assertEqual([userTranId], getUserTranIdsFromRepoName(repoName))
 
-		self.assertEqual(1, len(getRepo(status='canceled')))
+		data = getRepo(status='canceled')
+		self.assertEqual(1, len(data))
+		self.assertEqual('310952', data[0]['TransactionId'])
 
 		# add the file again, only the cancel record is saved.
 		self.assertEqual(1, saveRepoTradeFileToDB(inputFile))
 
+		history = getRepoTransactionHistory('310955')
+		self.assertEqual(1, len(history))
+		self.assertEqual('open', history[0]['Action'])
+		self.assertEqual(0.65, history[0]['InterestRate'])
 
+		# open, cancel, cancel
+		history = getRepoTransactionHistory('310952')
+		self.assertEqual(3, len(history))
+		self.assertEqual('open', history[0]['Action'])
+		self.assertEqual(0.75, history[0]['InterestRate'])
+		self.assertEqual('2021-01-25', history[0]['Date'])
 
-	# def testAddRepoTransaction2(self):
-	# 	"""
-	# 	Add 1 trade, then close it.
-	# 	"""
-	# 	clearRepoData()
-	# 	self.assertEqual(1, saveRepoMasterFileToDB(
-	# 		join(getCurrentDir(), 'samples', 'RepoMaster_20210216.xml')))
-
-	# 	self.assertEqual(2, saveRepoTradeFileToDB(
-	# 		join(getCurrentDir(), 'samples', 'RepoTrade_20210216.xml')))
-
-	# 	self.assertEqual(0, len(getRepo('2001-01-01')))
-	# 	self.assertEqual(1, len(getRepo('2001-01-01', status='closed')))
-
-
-
-	# def testAll(self):
-	# 	"""
-	# 	Add 7 repo positions, 3 of type OPEN, 4 of type fixed term.
-	# 	Then close 1, cancel 1, both of type OPEN.
-	# 	"""
-	# 	clearRepoData()
-	# 	self.assertEqual(7, saveRepoMasterFileToDB(
-	# 		join(getCurrentDir(), 'samples', 'RepoMaster_20210305_20210305154653.xml')))
-
-	# 	self.assertEqual(9, saveRepoTradeFileToDB(
-	# 		join(getCurrentDir(), 'samples', 'RepoTrade_20210305_20210305155621.xml')))
-
-	# 	# all repos that are still open as of 2021-02-04
-	# 	data = getRepo('2021-02-04')
-	# 	self.assertEqual(5, len(data))
-	# 	self.verifyHKDRepoPosition(data)
-	# 	self.verifyUSDRepoPosition(data)
-
-	# 	# there is one matured on 03-05, 4 still open as of 03-05
-	# 	self.assertEqual(4, len(getRepo('2021-03-05')))
-
-	# 	# there is one manually closed repo
-	# 	self.assertEqual(1, len(getRepo('2001-01-01', status='closed')))
-
-	# 	# one 2021-03-05, there is one manually closed repo and one 
-	# 	# matured repo
-	# 	data = getRepo('2021-03-05', status='closed')
-	# 	self.assertEqual(2, len(data))
-	# 	self.verifyClosedRepoPosition(data)
-
-	# 	# there is one repo canceled
-	# 	data = getRepo('2001-03-05', status='canceled')
-	# 	self.assertEqual(1, len(data))
-	# 	self.verifyCanceledRepoPosition(data)
+		self.assertEqual('cancel', history[1]['Action'])
+		self.assertEqual('cancel', history[2]['Action'])
 
 
 
-	# def testAll2(self):
-	# 	"""
-	# 	Add 2 rerate actions to a repo position
-	# 	"""
-	# 	self.assertEqual(2, saveRepoRerateFileToDB(
-	# 		join(getCurrentDir(), 'samples', 'Repo_ReRate_20210305_20210305174826.xml')))
+	def testAll(self):
+		"""
+		Add 7 repo positions, 3 of type OPEN, 4 of type fixed term.
+		Then close 1, cancel 1, both of type OPEN.
+		"""
+		clearRepoData()
+		self.assertEqual(7, saveRepoMasterFileToDB(
+			join(getCurrentDir(), 'samples', 'RepoMaster_20210305_20210305154653.xml')))
+
+		self.assertEqual(9, saveRepoTradeFileToDB(
+			join(getCurrentDir(), 'samples', 'RepoTrade_20210305_20210305155621.xml')))
+
+		data = getRepo()
+		self.assertEqual(6, len(data))	# 6 not canceled
+		self.verifyHKDRepoPosition(data)
+		self.verifyUSDRepoPosition(data)
+		self.verifyClosedRepoPosition(data)
+
+		# there is one repo canceled
+		data = getRepo(status='canceled')
+		self.assertEqual(1, len(data))
+		self.verifyCanceledRepoPosition(data)
+
+		# Add 2 rerate actions to a repo position 316444
+		self.assertEqual(2, saveRepoRerateFileToDB(
+			join(getCurrentDir(), 'samples', 'Repo_ReRate_20210305_20210305174826.xml')))
+
+		# add the same file again, 2 more rerate actions added
+		self.assertEqual(2, saveRepoRerateFileToDB(
+			join(getCurrentDir(), 'samples', 'Repo_ReRate_20210305_20210305174826.xml')))
+	
+		self.assertEqual(4, len(list(filter( lambda el: el['Action'] == 'rerate'
+										   , getRepoTransactionHistory('316444')))))
+
+
+
+	def verifyHKDRepoPosition(self, data):
+		L = list(filter(lambda p: p['Currency'] == 'HKD', data))
+		self.assertEqual(2, len(L))	# one open, one close
+
+		L = list(filter(lambda p: p['Status'] == 'open', L))
+		self.assertEqual(1, len(L))
 		
+		position = L[0]
+		self.assertEqual('316444', position['TransactionId'])
+		self.assertEqual('RR', position['Type'])
+		self.assertEqual('TEST_R', position['Portfolio'])
+		self.assertEqual('BOCHK', position['Custodian'])
+		self.assertEqual('ISIN', position['CollateralIDType'])
+		self.assertEqual('HK0000163607', position['CollateralID'])
+		self.assertEqual('2021-01-04', position['TradeDate'])
+		self.assertEqual('2021-01-08', position['SettleDate'])
+		self.assertEqual(True, position['IsOpenRepo'])
+		self.assertEqual('', position['MaturityDate'])
+		self.assertEqual(150000, position['Quantity'])
+		self.assertEqual('HKD', position['Currency'])
+		self.assertAlmostEqual(76.590277, position['Price'], 6)
+		self.assertEqual(100000, position['CollateralValue'])
+		self.assertEqual('MMRPEA24TS', position['RepoName'])
+		self.assertEqual('BB', position['Broker'])
+		self.assertEqual(0, position['Haircut'])
+		self.assertEqual('open', position['Status'])
+		self.assertEqual('ACT/360', position['DayCount'])
 
 
+
+	def verifyUSDRepoPosition(self, data):
+		L = list(filter(lambda p: p['Currency'] == 'USD', data))
+		self.assertEqual(4, len(L))
+
+		L = list(filter(lambda p: p['MaturityDate'] == '2021-04-05', data))
+		self.assertEqual(1, len(L))
 		
-
-	# def verifyHKDRepoPosition(self, data):
-	# 	L = list(filter(lambda p: p['Currency'] == 'HKD', data))
-	# 	self.assertEqual(1, len(L))
-		
-	# 	position = L[0]
-	# 	self.assertEqual('316444', position['TransactionId'])
-	# 	self.assertEqual('RR', position['Type'])
-	# 	self.assertEqual('TEST_R', position['Portfolio'])
-	# 	self.assertEqual('BOCHK', position['Custodian'])
-	# 	self.assertEqual('ISIN', position['CollateralIDType'])
-	# 	self.assertEqual('HK0000163607', position['CollateralID'])
-	# 	self.assertEqual('2021-01-04', position['TradeDate'])
-	# 	self.assertEqual('2021-01-08', position['SettleDate'])
-	# 	self.assertEqual(True, position['IsOpenRepo'])
-	# 	self.assertEqual('', position['MaturityDate'])
-	# 	self.assertEqual(150000, position['Quantity'])
-	# 	self.assertEqual('HKD', position['Currency'])
-	# 	self.assertAlmostEqual(76.590277, position['Price'], 6)
-	# 	self.assertEqual(100000, position['CollateralValue'])
-	# 	self.assertEqual('MMRPEA24TS', position['RepoName'])
-	# 	self.assertEqual('BB', position['Broker'])
-	# 	self.assertEqual(0, position['Haircut'])
-	# 	self.assertEqual('open', position['Status'])
-	# 	self.assertEqual('ACT/360', position['DayCount'])
+		position = L[0]
+		self.assertEqual('316456', position['TransactionId'])
+		self.assertEqual('RR', position['Type'])
+		self.assertEqual('TEST_R', position['Portfolio'])
+		self.assertEqual('BOCHK', position['Custodian'])
+		self.assertEqual('ISIN', position['CollateralIDType'])
+		self.assertEqual('XS2178949561', position['CollateralID'])
+		self.assertEqual('2021-02-01', position['TradeDate'])
+		self.assertEqual('2021-02-03', position['SettleDate'])
+		self.assertEqual(False, position['IsOpenRepo'])
+		self.assertEqual('2021-04-05', position['MaturityDate'])
+		self.assertEqual(200000, position['Quantity'])
+		self.assertEqual('USD', position['Currency'])
+		self.assertAlmostEqual(92.76, position['Price'], 6)
+		self.assertEqual(150000, position['CollateralValue'])
+		self.assertEqual('MMRPEB2418', position['RepoName'])
+		self.assertEqual('HSBC-REPO', position['Broker'])
+		self.assertEqual(0, position['Haircut'])
+		self.assertEqual('open', position['Status'])
+		self.assertEqual('ACT/365', position['DayCount'])
 
 
 
-	# def verifyUSDRepoPosition(self, data):
-	# 	L = list(filter(lambda p: p['Currency'] == 'USD', data))
-	# 	self.assertEqual(4, len(L))
+	def verifyClosedRepoPosition(self, data):
+		L = list(filter(lambda p: p['Status'] == 'closed', data))
+		self.assertEqual(1, len(L))
+		position = L[0]
 
-	# 	L = list(filter(lambda p: p['MaturityDate'] == '2021-04-05', data))
-	# 	self.assertEqual(1, len(L))
-		
-	# 	position = L[0]
-	# 	self.assertEqual('316456', position['TransactionId'])
-	# 	self.assertEqual('RR', position['Type'])
-	# 	self.assertEqual('TEST_R', position['Portfolio'])
-	# 	self.assertEqual('BOCHK', position['Custodian'])
-	# 	self.assertEqual('ISIN', position['CollateralIDType'])
-	# 	self.assertEqual('XS2178949561', position['CollateralID'])
-	# 	self.assertEqual('2021-02-01', position['TradeDate'])
-	# 	self.assertEqual('2021-02-03', position['SettleDate'])
-	# 	self.assertEqual(False, position['IsOpenRepo'])
-	# 	self.assertEqual('2021-04-05', position['MaturityDate'])
-	# 	self.assertEqual(200000, position['Quantity'])
-	# 	self.assertEqual('USD', position['Currency'])
-	# 	self.assertAlmostEqual(92.76, position['Price'], 6)
-	# 	self.assertEqual(150000, position['CollateralValue'])
-	# 	self.assertEqual('MMRPEB2418', position['RepoName'])
-	# 	self.assertEqual('HSBC-REPO', position['Broker'])
-	# 	self.assertEqual(0, position['Haircut'])
-	# 	self.assertEqual('open', position['Status'])
-	# 	self.assertEqual('ACT/365', position['DayCount'])
+		self.assertEqual('316447', position['TransactionId'])
+		self.assertEqual('RR', position['Type'])
+		self.assertEqual('TEST_R', position['Portfolio'])
+		self.assertEqual('BOCHK', position['Custodian'])
+		self.assertEqual('ISIN', position['CollateralIDType'])
+		self.assertEqual('HK0000163607', position['CollateralID'])
+		self.assertEqual('2021-01-04', position['TradeDate'])
+		self.assertEqual('2021-01-06', position['SettleDate'])
+		self.assertEqual(True, position['IsOpenRepo'])
+		self.assertEqual('', position['MaturityDate'])
+		self.assertEqual(200000, position['Quantity'])
+		self.assertEqual('HKD', position['Currency'])
+		self.assertAlmostEqual(86.42707494, position['Price'], 6)
+		self.assertEqual(150000, position['CollateralValue'])
+		self.assertEqual('MMRPED25DS', position['RepoName'])
+		self.assertEqual('BB', position['Broker'])
+		self.assertEqual(0, position['Haircut'])
+		self.assertEqual('closed', position['Status'])	# closed explicitly
+		self.assertEqual('ACT/360', position['DayCount'])
 
 
 
-	# def verifyClosedRepoPosition(self, data):
-	# 	L = list(filter(lambda p: p['MaturityDate'] != '', data))
-	# 	self.assertEqual(1, len(L))
-	# 	position = L[0]
+	def verifyCanceledRepoPosition(self, data):
+		position = data[0]
 
-	# 	self.assertEqual('316472', position['TransactionId'])
-	# 	self.assertEqual('RR', position['Type'])
-	# 	self.assertEqual('TEST_R', position['Portfolio'])
-	# 	self.assertEqual('BOCHK', position['Custodian'])
-	# 	self.assertEqual('ISIN', position['CollateralIDType'])
-	# 	self.assertEqual('US00131MAJ27', position['CollateralID'])
-	# 	self.assertEqual('2021-02-25', position['TradeDate'])
-	# 	self.assertEqual('2021-02-26', position['SettleDate'])
-	# 	self.assertEqual(False, position['IsOpenRepo'])
-	# 	self.assertEqual('2021-03-05', position['MaturityDate'])
-	# 	self.assertEqual(300000, position['Quantity'])
-	# 	self.assertEqual('USD', position['Currency'])
-	# 	self.assertAlmostEqual(91.28946759, position['Price'], 6)
-	# 	self.assertEqual(250000, position['CollateralValue'])
-	# 	self.assertEqual('MMRPE825GK', position['RepoName'])
-	# 	self.assertEqual('BNP-REPO', position['Broker'])
-	# 	self.assertEqual(0, position['Haircut'])
-	# 	self.assertEqual('open', position['Status'])	# closed due to maturity
-	# 	self.assertEqual('ACT/365', position['DayCount'])
-
-	# 	L = list(filter(lambda p: p['MaturityDate'] == '', data))
-	# 	self.assertEqual(1, len(L))
-	# 	position = L[0]
-
-	# 	self.assertEqual('316447', position['TransactionId'])
-	# 	self.assertEqual('RR', position['Type'])
-	# 	self.assertEqual('TEST_R', position['Portfolio'])
-	# 	self.assertEqual('BOCHK', position['Custodian'])
-	# 	self.assertEqual('ISIN', position['CollateralIDType'])
-	# 	self.assertEqual('HK0000163607', position['CollateralID'])
-	# 	self.assertEqual('2021-01-04', position['TradeDate'])
-	# 	self.assertEqual('2021-01-06', position['SettleDate'])
-	# 	self.assertEqual(True, position['IsOpenRepo'])
-	# 	self.assertEqual('', position['MaturityDate'])
-	# 	self.assertEqual(200000, position['Quantity'])
-	# 	self.assertEqual('HKD', position['Currency'])
-	# 	self.assertAlmostEqual(86.42707494, position['Price'], 6)
-	# 	self.assertEqual(150000, position['CollateralValue'])
-	# 	self.assertEqual('MMRPED25DS', position['RepoName'])
-	# 	self.assertEqual('BB', position['Broker'])
-	# 	self.assertEqual(0, position['Haircut'])
-	# 	self.assertEqual('closed', position['Status'])	# closed explicitly
-	# 	self.assertEqual('ACT/360', position['DayCount'])
-
-
-
-	# def verifyCanceledRepoPosition(self, data):
-	# 	position = data[0]
-
-	# 	self.assertEqual('316450', position['TransactionId'])
-	# 	self.assertEqual('RR', position['Type'])
-	# 	self.assertEqual('TEST_R', position['Portfolio'])
-	# 	self.assertEqual('BOCHK', position['Custodian'])
-	# 	self.assertEqual('ISIN', position['CollateralIDType'])
-	# 	self.assertEqual('HK0000163607', position['CollateralID'])
-	# 	self.assertEqual('2021-01-04', position['TradeDate'])
-	# 	self.assertEqual('2021-01-07', position['SettleDate'])
-	# 	self.assertEqual(True, position['IsOpenRepo'])
-	# 	self.assertEqual('', position['MaturityDate'])
-	# 	self.assertEqual(250000, position['Quantity'])
-	# 	self.assertEqual('HKD', position['Currency'])
-	# 	self.assertAlmostEqual(92.29298952, position['Price'], 6)
-	# 	self.assertEqual(200000, position['CollateralValue'])
-	# 	self.assertEqual('MMRPE425FC', position['RepoName'])
-	# 	self.assertEqual('BB', position['Broker'])
-	# 	self.assertEqual(0, position['Haircut'])
-	# 	self.assertEqual('canceled', position['Status'])
-	# 	self.assertEqual('ACT/360', position['DayCount'])
+		self.assertEqual('316450', position['TransactionId'])
+		self.assertEqual('RR', position['Type'])
+		self.assertEqual('TEST_R', position['Portfolio'])
+		self.assertEqual('BOCHK', position['Custodian'])
+		self.assertEqual('ISIN', position['CollateralIDType'])
+		self.assertEqual('HK0000163607', position['CollateralID'])
+		self.assertEqual('2021-01-04', position['TradeDate'])
+		self.assertEqual('2021-01-07', position['SettleDate'])
+		self.assertEqual(True, position['IsOpenRepo'])
+		self.assertEqual('', position['MaturityDate'])
+		self.assertEqual(250000, position['Quantity'])
+		self.assertEqual('HKD', position['Currency'])
+		self.assertAlmostEqual(92.29298952, position['Price'], 6)
+		self.assertEqual(200000, position['CollateralValue'])
+		self.assertEqual('MMRPE425FC', position['RepoName'])
+		self.assertEqual('BB', position['Broker'])
+		self.assertEqual(0, position['Haircut'])
+		self.assertEqual('canceled', position['Status'])
+		self.assertEqual('ACT/360', position['DayCount'])
