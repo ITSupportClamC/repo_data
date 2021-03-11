@@ -7,7 +7,7 @@
 # any of them.
 # 
 
-from aim_xml.repo_data import getRawDataFromXML, getRepoTradeFromFile \
+from aim_xml.repo_xml import getRawDataFromXML, getRepoTradeFromFile \
 							, getRepoRerateFromFile
 from steven_utils.utility import mergeDict
 from repo_data.data import addRepoMaster, addRepoTransaction \
