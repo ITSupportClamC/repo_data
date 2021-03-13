@@ -70,23 +70,27 @@ def saveRepoMasterFileToDB(file):
 
 
 
+isRepoOpenTrade = lambda t: \
+	t['TransactionType'] in ('ReverseRepo_InsertUpdate', 'Repo_InsertUpdate') \
+	and 'LoanAmount' in t
+
+
+isRepoCloseTrade = lambda t: \
+	t['TransactionType'] in ('ReverseRepo_InsertUpdate', 'Repo_InsertUpdate') \
+	and not 'LoanAmount' in t
+
+
+isRepoCancelTrade = lambda t: \
+	t['TransactionType'] in ('ReverseRepo_Delete', 'Repo_Delete')
+
+
+
 def saveRepoTradeFileToDB(file):
 	"""
 	[String] repo trade file (without Geneva header) 
 		=> [Int] no. of trades saved into datastore
 	"""
 	logger.debug('saveRepoTradeFileToDB(): {0}'.format(file))
-
-	isRepoOpenTrade = lambda t: \
-		t['TransactionType'] in ('ReverseRepo_InsertUpdate', 'Repo_InsertUpdate') \
-		and 'LoanAmount' in t
-
-	isRepoCloseTrade = lambda t: \
-		t['TransactionType'] in ('ReverseRepo_InsertUpdate', 'Repo_InsertUpdate') \
-		and not 'LoanAmount' in t
-
-	isRepoCancelTrade = lambda t: \
-		t['TransactionType'] in ('ReverseRepo_Delete', 'Repo_Delete')
 
 	def addRepo(trade):
 		try:
