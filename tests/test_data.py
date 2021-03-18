@@ -252,9 +252,11 @@ class TestRepoDataAPI(unittest2.TestCase):
 								.first()
 		self.assertEqual(Constants.REPO_TRANS_STATUS_CLOSE, transaction_result.status)
 		session.close()
-		#-- 2. close the transaction again to confirm CloseCanceledRepoTransactionError will throw
-		with self.assertRaises(CloseCanceledRepoTransactionError):
+		#-- 2. close a closed transaction again. It shall be allowed
+		try:
 			closeRepoTransaction(close_transaction)
+		except CloseCanceledRepoTransactionError:
+			self.fail("Close a closed transaction again shall be allowed. But an exception is throw")
 		#-- 3. close an unknown transaction to confirm RepoTransactionNotExistError will throw
 		unknown_transaction = {
 			"UserTranId1" : "300734x",

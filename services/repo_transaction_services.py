@@ -133,8 +133,7 @@ class RepoTransactionServices:
 				self.logger.warn(message)
 				raise RepoTransactionNotExistError(message)
 			#-- throw error if transaction has been closed or canceled
-			if repo_trans_to_cls.status == Constants.REPO_TRANS_STATUS_CANCEL or \
-					repo_trans_to_cls.status == Constants.REPO_TRANS_STATUS_CLOSE:
+			if repo_trans_to_cls.status == Constants.REPO_TRANS_STATUS_CANCEL:
 				message = "transaction_id: " + \
 							transaction['transaction_id'] + \
 							". is either closed or canceled"
